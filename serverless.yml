@@ -1,0 +1,248 @@
+service: sls
+
+frameworkVersion: "2"
+
+custom:
+  settings:
+    DATA_TABLE: data
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment: ${self:custom.settings}
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DATA_TABLE}"
+
+functions:
+  createClient:
+    handler: handler.createClient
+    events:
+      - http:
+          path: /client
+          method: post
+          integration: LAMBDA
+  getClient:
+    handler: handler.getClient
+    events:
+      - http:
+          path: /client/{PK}
+          method: get
+          integration: LAMBDA
+  getAllItems:
+    handler: handler.getAllItems
+    events:
+      - http:
+          path: /items
+          method: get
+          integration: LAMBDA
+  updateClient:
+    handler: handler.updateClient
+    events:
+      - http:
+          path: /client/{PK}
+          method: put
+          integration: LAMBDA
+  deleteClient:
+    handler: handler.deleteClient
+    events:
+      - http:
+          path: /client/{PK}
+          method: delete
+          integration: LAMBDA
+  createSeller:
+    handler: handler.createSeller
+    events:
+      - http:
+          path: /seller
+          method: post
+          integration: LAMBDA
+  getAllSellers:
+    handler: handler.getAllSellers
+    events:
+      - http:
+          path: /sellers
+          method: get
+          integration: LAMBDA
+  getSeller:
+    handler: handler.getSeller
+    events:
+      - http:
+          path: /seller/{PK}
+          method: get
+          integration: LAMBDA
+  updateSeller:
+    handler: handler.updateSeller
+    events:
+      - http:
+          path: /seller/{PK}
+          method: put
+          integration: LAMBDA
+  deleteSeller:
+    handler: handler.deleteSeller
+    events:
+      - http:
+          path: /seller/{PK}
+          method: delete
+          integration: LAMBDA
+  createProduct:
+    handler: handler.createProduct
+    events:
+      - http:
+          path: /seller/{PK}/product
+          method: post
+          integration: LAMBDA
+  getProduct:
+    handler: handler.getProduct
+    events:
+      - http:
+          path: /seller/{PK}/product/{prodPK}
+          method: get
+          integration: LAMBDA
+  getProducts:
+    handler: handler.getProducts
+    events:
+      - http:
+          path: /seller/{PK}/products
+          method: get
+          integration: LAMBDA
+  getAllProducts:
+    handler: handler.getAllProducts
+    events:
+      - http:
+          path: /products
+          method: get
+          integration: LAMBDA
+  updateProduct:
+    handler: handler.updateProduct
+    events:
+      - http:
+          path: /seller/{PK}/product/{prodPK}
+          method: put
+          integration: LAMBDA
+  deleteProduct:
+    handler: handler.deleteProduct
+    events:
+      - http:
+          path: /seller/{PK}/product/{prodPK}
+          method: delete
+          integration: LAMBDA
+  createOrder:
+    handler: handler.createOrder
+    events:
+      - http:
+          path: /client/{PK}/seller/{sellerPK}/product/{productPK}/order
+          method: post
+          integration: LAMBDA
+  getOrderForClient:
+    handler: handler.getOrderForClient
+    events:
+      - http:
+          path: /client/{PK}/order/{orderPK}
+          method: get
+          integration: LAMBDA
+  getOrdersForClient:
+    handler: handler.getOrdersForClient
+    events:
+      - http:
+          path: /client/{PK}/orders
+          method: get
+          integration: LAMBDA
+  getOrderForSeller:
+    handler: handler.getOrderForSeller
+    events:
+      - http:
+          path: /seller/{PK}/order/{orderPK}
+          method: get
+          integration: LAMBDA
+  getOrdersForSeller:
+    handler: handler.getOrdersForSeller
+    events:
+      - http:
+          path: /seller/{PK}/orders
+          method: get
+          integration: LAMBDA
+  updateOrderForClient:
+    handler: handler.updateOrderForClient
+    events:
+      - http:
+          path: /client/{PK}/order/{orderPK}
+          method: put
+          integration: LAMBDA
+  updateOrderForSeller:
+    handler: handler.updateOrderForSeller
+    events:
+      - http:
+          path: /seller/{PK}/order/{orderPK}
+          method: put
+          integration: LAMBDA
+  deleteOrderForClient:
+    handler: handler.deleteOrderForClient
+    events:
+      - http:
+          path: /client/{PK}/order/{orderPK}
+          method: delete
+          integration: LAMBDA
+  deleteOrderForSeller:
+    handler: handler.deleteOrderForSeller
+    events:
+      - http:
+          path: /seller/{PK}/order/{orderPK}
+          method: delete
+          integration: LAMBDA
+
+resources:
+  Resources:
+    DataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "PK"
+            AttributeType: "S"
+          - AttributeName: "SK"
+            AttributeType: "S"
+          - AttributeName: "sellerId"
+            AttributeType: "S"
+          - AttributeName: "type"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "PK"
+            KeyType: "HASH"
+          - AttributeName: "SK"
+            KeyType: "RANGE"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.DATA_TABLE}
+        GlobalSecondaryIndexes:
+          - IndexName: "GSI1"
+            KeySchema:
+              - AttributeName: sellerId
+                KeyType: HASH
+              - AttributeName: SK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: "GSI2"
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+              - AttributeName: PK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
