@@ -481,59 +481,99 @@ module.exports.createOrder = (event, context, callback) => {
   db.get(prodParams).promise()
   .then(res => {
     if (res.Item){
-      if(res.Item.stock > reqBody.quantity){
-        const order = {
-          PK: `CLIENT#${clientId}`,
-          SK: `ORDER#${orderId}`,
-          type: "order",
-          orderStatus: "Pending",
-          sellerId: `SELLER#${sellerId}`,
-          productId: productId,
-          startDate: date.toString(),
-          expDate: dateExp.toString(),
-          clientId: clientId,
-          orderId: orderId,
-          quantity: reqBody.quantity,
-          finalPrice: reqBody.quantity * res.Item.price,
-          productName: res.Item.productName
-        };
-  
-        const params = {
-          Key: {
-            PK: `SELLER#${sellerId}`,
-            SK: `PRODUCT#${productId}`
-          },
-          TableName: dataTable,
-          ConditionExpression: 'attribute_exists(PK)',
-          UpdateExpression: 'set ' + paramName + ' = :v',
-          ExpressionAttributeValues: {
-            ':v': res.Item.stock - reqBody.quantity
-          },
-          ReturnValues: 'ALL_NEW'
-        };
 
-        console.log('Updating');
-      
-        db
-          .update(params)
-          .promise()
-          .then((res) => {
-            db
-              .put({
-                TableName: dataTable,
-                Item: order
-              })
-              .promise()
-              .then(() => {
-                callback(null, response(201, order));
-              })
-              .catch((err) => response(null, response(err.statusCode, err)));
-          })
-          .catch((err) => callback(null, response(err.statusCode, err)));
-  
-      }else{
-        callback(null, response(409, { error: 'La cantidad que desea pedir sobrepasa el stock de items que tiene el vendedor' }))
+      const clientParams = {
+        Key: {
+          PK: `CLIENT#${clientId}`,
+          SK: `#METADATA#${clientId}`
+        },
+        TableName:dataTable
       }
+
+      db.get(clientParams).promise()
+        .then(resCli => {
+          if (resCli.Item){
+
+            const sellerParams = {
+              Key: {
+                PK: `SELLER#${sellerId}`,
+                SK: `#METADATA#${sellerId}`
+              },
+              TableName:dataTable
+            }
+
+            db.get(sellerParams)
+              .promise()
+              .then((resSel) => {
+                if (resSel.Item){
+
+                  if(res.Item.stock > reqBody.quantity){
+                    const order = {
+                      PK: `CLIENT#${clientId}`,
+                      SK: `ORDER#${orderId}`,
+                      type: "order",
+                      orderStatus: "Pending",
+                      sellerId: `SELLER#${sellerId}`,
+                      productId: productId,
+                      startDate: date.toString(),
+                      expDate: dateExp.toString(),
+                      clientId: clientId,
+                      orderId: orderId,
+                      quantity: reqBody.quantity,
+                      finalPrice: reqBody.quantity * res.Item.price,
+                      productName: res.Item.productName,
+                      sellerName: resSel.Item.sellerName,
+                      clientName: `${resCli.Item.clientName} ${resCli.Item.lastName}`
+                    };
+              
+                    const params = {
+                      Key: {
+                        PK: `SELLER#${sellerId}`,
+                        SK: `PRODUCT#${productId}`
+                      },
+                      TableName: dataTable,
+                      ConditionExpression: 'attribute_exists(PK)',
+                      UpdateExpression: 'set ' + paramName + ' = :v',
+                      ExpressionAttributeValues: {
+                        ':v': res.Item.stock - reqBody.quantity
+                      },
+                      ReturnValues: 'ALL_NEW'
+                    };
+            
+                    console.log('Updating');
+                  
+                    db
+                      .update(params)
+                      .promise()
+                      .then((res) => {
+                        db
+                          .put({
+                            TableName: dataTable,
+                            Item: order
+                          })
+                          .promise()
+                          .then(() => {
+                            callback(null, response(201, order));
+                          })
+                          .catch((err) => response(null, response(err.statusCode, err)));
+                      })
+                      .catch((err) => callback(null, response(err.statusCode, err)));
+              
+                  }else{
+                    callback(null, response(409, { error: 'La cantidad que desea pedir sobrepasa el stock de items que tiene el vendedor' }))
+                  }
+
+
+                }
+                else callback(null, response(404, { error: 'Vendedor no encontrado' }));
+              })
+              .catch((err) => callback(null, response(err.statusCode, err)));
+
+          }
+          else callback(null, response(404, { error: 'Cliente no encontrado' }));
+        })
+        .catch(err => callback(null, response(err.statusCode, err)));
+
       
     }
     else{
