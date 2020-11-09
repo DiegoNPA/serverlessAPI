@@ -199,6 +199,13 @@ functions:
           path: /seller/{PK}/order/{orderPK}
           method: delete
           integration: LAMBDA
+  getUserByCognitoId:
+    handler: handler.getUserByCognitoId
+    events:
+      - http:
+          path: /user/{cognitoId}
+          method: get
+          integration: lambda
 
 resources:
   Resources:
@@ -213,6 +220,8 @@ resources:
           - AttributeName: "sellerId"
             AttributeType: "S"
           - AttributeName: "type"
+            AttributeType: "S"
+          - AttributeName: "cognitoId"
             AttributeType: "S"
         KeySchema:
           - AttributeName: "PK"
@@ -240,6 +249,17 @@ resources:
               - AttributeName: type
                 KeyType: HASH
               - AttributeName: PK
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: "GSI3"
+            KeySchema:
+              - AttributeName: cognitoId
+                KeyType: HASH
+              - AttributeName: SK
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL

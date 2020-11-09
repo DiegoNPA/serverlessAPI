@@ -69,7 +69,8 @@ module.exports.createClient = (event, context, callback) => {
     clientName: reqBody.clientName,
     lastName: reqBody.lastName,
     phone: reqBody.phone,
-    gender: reqBody.gender
+    gender: reqBody.gender,
+    cognitoId: reqBody.cognitoId
   };
 
   return db
@@ -172,7 +173,8 @@ module.exports.createSeller = (event, context, callback) => {
     sellerName: reqBody.sellerName,
     description: reqBody.description,
     phone: reqBody.phone,
-    category: reqBody.category
+    category: reqBody.category,
+    cognitoId: reqBody.cognitoId
   };
 
   return db
@@ -465,6 +467,8 @@ module.exports.createOrder = (event, context, callback) => {
   const reqBody = JSON.parse(event.body);
   const orderId = uuidv4();
   const paramName = "stock"
+  let date = new Date(Date.now());
+  let dateExp = new Date(Date.now() + (6.048e+8));
 
   const prodParams = {
     Key: {
@@ -485,10 +489,13 @@ module.exports.createOrder = (event, context, callback) => {
           orderStatus: "Pending",
           sellerId: `SELLER#${sellerId}`,
           productId: productId,
+          startDate: date.toString(),
+          expDate: dateExp.toString(),
           clientId: clientId,
           orderId: orderId,
           quantity: reqBody.quantity,
-          finalPrice: reqBody.quantity * res.Item.price
+          finalPrice: reqBody.quantity * res.Item.price,
+          productName: res.Item.productName
         };
   
         const params = {
@@ -818,4 +825,36 @@ module.exports.deleteOrderForSeller = (event, context, callback) => {
     })
     .catch((err) => callback(null, response(err.statusCode, err)));
 
+}
+
+//Obtener usuario dado su cognitoId
+//Se requiere el GSI3
+module.exports.getUserByCognitoId = (event, context, callback) => {
+
+  const cognitoId = event.pathParameters.cognitoId;
+
+  const params = {
+    TableName: dataTable,
+    IndexName: "GSI3",
+    KeyConditionExpression: "#cognitoId = :cognitoId and begins_with(#SK, :SK)",
+    ExpressionAttributeNames: { "#cognitoId": "cognitoId", "#SK": "SK" },
+    ExpressionAttributeValues: {
+      ":cognitoId": `${event.pathParameters.cognitoId}`,
+      ":SK": "#METADATA#"
+    }
+  }
+
+  console.log(params);
+
+  return db.query(params)
+  .promise()
+  .then((res)=> {
+    if(res.Items[0]){
+      callback(null, response(200, res.Items[0]));  
+    }
+    else{
+      callback(null, response(404, { error: 'No existe el usuario' }));
+    }
+    })
+    .catch((err) => callback(null, response(err.statusCode, err)));
 }
