@@ -174,7 +174,8 @@ module.exports.createSeller = (event, context, callback) => {
     description: reqBody.description,
     phone: reqBody.phone,
     category: reqBody.category,
-    cognitoId: reqBody.cognitoId
+    cognitoId: reqBody.cognitoId,
+    imageUrl: reqBody.imageUrl
   };
 
   return db
@@ -254,12 +255,13 @@ module.exports.updateSeller = (event, context, callback) => {
     },
     TableName: dataTable,
     ConditionExpression: 'attribute_exists(PK)',
-    UpdateExpression: 'SET sellerName = :sellerName, description = :description, phone = :phone, category = :category',
+    UpdateExpression: 'SET sellerName = :sellerName, description = :description, phone = :phone, category = :category, imageUrl = :imageUrl',
     ExpressionAttributeValues: {
       ':sellerName': sellerName,
       ':description': description,
       ':phone': phone,
-      ':category': category
+      ':category': category,
+      ":imageUrl": imageUrl
     },
     ReturnValues: 'ALL_NEW'
   };
@@ -312,7 +314,8 @@ module.exports.createProduct = (event, context, callback) => {
     price: reqBody.price,
     category: reqBody.category,
     measureUnit: reqBody.measureUnit,
-    stock: reqBody.stock
+    stock: reqBody.stock,
+    imageUrl: reqBody.iamgeUrl
   };
 
   return db
@@ -416,14 +419,15 @@ module.exports.updateProduct = (event, context, callback) => {
     },
     TableName: dataTable,
     ConditionExpression: 'attribute_exists(PK)',
-    UpdateExpression: 'SET productName = :productName, description = :description, price = :price, category = :category, measureUnit = :measureUnit, stock = :stock',
+    UpdateExpression: 'SET productName = :productName, description = :description, price = :price, category = :category, measureUnit = :measureUnit, stock = :stock, imageUrl = :imageUrl',
     ExpressionAttributeValues: {
       ':productName': productName,
       ':description': description,
       ':price': price,
       ':category': category,
       ':measureUnit': measureUnit,
-      ':stock': stock
+      ':stock': stock,
+      ":imageUrl": imageUrl
     },
     ReturnValues: 'ALL_NEW'
   };
