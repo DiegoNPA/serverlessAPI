@@ -315,7 +315,7 @@ module.exports.createProduct = (event, context, callback) => {
     category: reqBody.category,
     measureUnit: reqBody.measureUnit,
     stock: reqBody.stock,
-    imageUrl: reqBody.iamgeUrl
+    imageUrl: reqBody.imageUrl
   };
 
   return db
