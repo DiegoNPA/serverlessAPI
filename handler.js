@@ -246,7 +246,7 @@ module.exports.getSeller = (event, context, callback) =>{
 module.exports.updateSeller = (event, context, callback) => {
 
   const body = JSON.parse(event.body);
-  const { sellerName, description, phone, category } = body;
+  const { sellerName, description, phone, category, imageUrl } = body;
 
   const params = {
     Key: {
@@ -410,7 +410,7 @@ module.exports.getAllProducts = (event, context, callback) => {
 //Modificar un producto
 module.exports.updateProduct = (event, context, callback) => {
   const body = JSON.parse(event.body);
-  const { productName, description, price, category, measureUnit, stock } = body
+  const { productName, description, price, category, measureUnit, stock, imageUrl } = body
 
   const params = {
     Key: {
