@@ -516,7 +516,7 @@ module.exports.createOrder = (event, context, callback) => {
                       PK: `CLIENT#${clientId}`,
                       SK: `ORDER#${orderId}`,
                       type: "order",
-                      orderStatus: "Pending",
+                      orderStatus: "Pendiente",
                       sellerId: `SELLER#${sellerId}`,
                       productId: productId,
                       startDate: date.toString(),
