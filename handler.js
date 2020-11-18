@@ -527,7 +527,9 @@ module.exports.createOrder = (event, context, callback) => {
                       finalPrice: reqBody.quantity * res.Item.price,
                       productName: res.Item.productName,
                       sellerName: resSel.Item.sellerName,
-                      clientName: `${resCli.Item.clientName} ${resCli.Item.lastName}`
+                      clientName: `${resCli.Item.clientName} ${resCli.Item.lastName}`,
+                      latitude: reqBody.latitude,
+                      longitude: reqBody.longitude
                     };
               
                     const params = {
