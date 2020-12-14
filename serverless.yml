@@ -94,6 +94,13 @@ functions:
           path: /seller/{PK}
           method: delete
           integration: LAMBDA
+  rateSeller:
+    handler: handler.rateSeller
+    events:
+      - http:
+          path: /seller/rateSeller/{PK}
+          method: put
+          integration: LAMBDA
   createProduct:
     handler: handler.createProduct
     events:

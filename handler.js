@@ -175,7 +175,11 @@ module.exports.createSeller = (event, context, callback) => {
     phone: reqBody.phone,
     category: reqBody.category,
     cognitoId: reqBody.cognitoId,
-    imageUrl: reqBody.imageUrl
+    imageUrl: reqBody.imageUrl,
+    rating: 0,
+    numReviews: 0,
+    ratingTotal: 0,
+    numComplaints: 0
   };
 
   return db
@@ -295,6 +299,72 @@ module.exports.deleteSeller = (event, context, callback) => {
     )
     .catch((err) => callback(null, response(err.statusCode, err)));
 };
+
+//Darle rating a un vendedor
+module.exports.rateSeller = (event, context, callback) => {
+
+  console.log('startssss');
+
+  const reqBody = JSON.parse(event.body);
+
+  console.log(reqBody);
+  console.log(reqBody.rating);
+
+  const sellerId = event.pathParameters.PK;
+
+  const params1 = {
+    Key: {
+      PK: `SELLER#${sellerId}`,
+      SK: `#METADATA#${sellerId}`
+    },
+    TableName:dataTable
+  };
+
+  db.get(params1).promise()
+  .then(res => {
+    if (res.Item){
+
+      console.log(res.Item);
+
+      const newRatingTotal = parseInt(res.Item.ratingTotal) + parseInt(reqBody.rating);
+      const newNumReviews = parseInt(res.Item.numReviews) + 1;
+      const newRating = Math.round(newRatingTotal/newNumReviews);
+
+      console.log(newRatingTotal, 'newRatingTotal');
+      console.log(newNumReviews, 'newNumReviews');
+      console.log(newRating, 'newRating');
+
+      const params2 = {
+        Key: {
+          PK: `SELLER#${sellerId}`,
+          SK: `#METADATA#${sellerId}`
+        },
+        TableName: dataTable,
+        ConditionExpression: 'attribute_exists(PK)',
+        UpdateExpression: 'SET rating = :rating, numReviews = :numReviews, ratingTotal = :ratingTotal',
+        ExpressionAttributeValues: {
+          ':rating': newRating,
+          ':numReviews': newNumReviews,
+          ':ratingTotal': newRatingTotal
+        },
+        ReturnValues: 'ALL_NEW'
+      }
+
+      console.log(params2, 'params2');
+
+      return db
+      .update(params2)
+      .promise()
+      .then((resp) => {
+        console.log(resp, 'resp');
+        callback(null, response(200, resp.Attributes));
+      })
+      .catch((err) => callback(null, response(err.statusCode, err)));
+
+    }else callback(null, response(404, { error: 'Vendedor no encontrado' }));
+  })
+  .catch(err => callback(null, response(err.statusCode, err)));
+}
 
 //----------PRODUCTOS----------
 //Crear un producto
