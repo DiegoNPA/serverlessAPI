@@ -179,7 +179,8 @@ module.exports.createSeller = (event, context, callback) => {
     rating: 0,
     numReviews: 0,
     ratingTotal: 0,
-    numComplaints: 0
+    numComplaints: 0,
+    comments: undefined
   };
 
   return db
@@ -303,13 +304,7 @@ module.exports.deleteSeller = (event, context, callback) => {
 //Darle rating a un vendedor
 module.exports.rateSeller = (event, context, callback) => {
 
-  console.log('startssss');
-
   const reqBody = JSON.parse(event.body);
-
-  console.log(reqBody);
-  console.log(reqBody.rating);
-
   const sellerId = event.pathParameters.PK;
 
   const params1 = {
@@ -324,15 +319,9 @@ module.exports.rateSeller = (event, context, callback) => {
   .then(res => {
     if (res.Item){
 
-      console.log(res.Item);
-
       const newRatingTotal = parseInt(res.Item.ratingTotal) + parseInt(reqBody.rating);
       const newNumReviews = parseInt(res.Item.numReviews) + 1;
       const newRating = Math.round(newRatingTotal/newNumReviews);
-
-      console.log(newRatingTotal, 'newRatingTotal');
-      console.log(newNumReviews, 'newNumReviews');
-      console.log(newRating, 'newRating');
 
       const params2 = {
         Key: {
@@ -350,8 +339,6 @@ module.exports.rateSeller = (event, context, callback) => {
         ReturnValues: 'ALL_NEW'
       }
 
-      console.log(params2, 'params2');
-
       return db
       .update(params2)
       .promise()
@@ -364,6 +351,39 @@ module.exports.rateSeller = (event, context, callback) => {
     }else callback(null, response(404, { error: 'Vendedor no encontrado' }));
   })
   .catch(err => callback(null, response(err.statusCode, err)));
+}
+
+//Añadir un comentario a un vendedor
+module.exports.addCommentToSeller = (event, context, callback) => {
+
+  const reqBody = JSON.parse(event.body);
+  const sellerId = event.pathParameters.PK;
+
+  const params = {
+    Key: {
+      PK: `SELLER#${sellerId}`,
+      SK: `#METADATA#${sellerId}`
+    },
+    TableName: dataTable,
+    ExpressionAttributeNames:{
+      "#Y": "comments"
+    },
+    ExpressionAttributeValues: {
+      ':y': [reqBody.comment],
+    },
+    ConditionExpression: 'attribute_exists(comments)',
+    UpdateExpression: 'SET #Y = list_append(#Y,:y)',
+  }
+
+  console.log(params);
+
+  return db
+    .update(params)
+    .promise()
+    .then((res) => {
+      callback(null, response(200, res));
+    })
+    .catch((err) => callback(null, response(err.statusCode, err)));
 }
 
 //----------PRODUCTOS----------

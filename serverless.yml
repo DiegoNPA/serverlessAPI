@@ -101,6 +101,13 @@ functions:
           path: /seller/rateSeller/{PK}
           method: put
           integration: LAMBDA
+  addCommentToSeller:
+    handler: handler.addCommentToSeller
+    events:
+      - http:
+          path: /seller/addComment/{PK}
+          method: put
+          integration: LAMBDA
   createProduct:
     handler: handler.createProduct
     events:
