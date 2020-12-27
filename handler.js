@@ -180,7 +180,9 @@ module.exports.createSeller = (event, context, callback) => {
     numReviews: 0,
     ratingTotal: 0,
     numComplaints: 0,
-    comments: undefined
+    comments: [
+      
+    ]
   };
 
   return db
